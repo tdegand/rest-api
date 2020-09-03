@@ -30,7 +30,7 @@ router.get('/api/users', asyncHandler(async(req, res) => {
 router.post('/api/users', asyncHandler(async(req, res) => {
     try{
       res.status(201)
-      await User.create({  firstname: req.body.firstName, lastName: req.body.lastName, emailAddress: req.body.emailAddress, password: req.body.password })
+      await User.create({  firstName: req.body.firstName, lastName: req.body.lastName, emailAddress: req.body.emailAddress, password: req.body.password })
     }catch(error) {
       res.status(400)
       res.json({ error });
@@ -75,10 +75,7 @@ router.post('/api/courses', asyncHandler(async(req, res) => {
     await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
   }catch(error) {
     res.status(400)
-    res.json( {
-      message: "Sorry something went wrong"
-    },
-    { error })
+    res.json({ error })
   }
 }));
 
@@ -108,10 +105,7 @@ router.delete('/api/courses/:id', asyncHandler(async(req, res) => {
     res.status(204)
   } catch(error) {
     res.status(400)
-    res.json( {
-      message: "Sorry something went wrong"
-    },
-    { error })
+    res.json({ error })
   }
   
 }));

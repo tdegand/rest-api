@@ -4,6 +4,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const Sequelize = require("sequelize")
+const bodyParser = require('body-parser')
 
 
 // variable to enable global error logging
@@ -30,7 +31,10 @@ sequelize.authenticate()
     console.error('Unable to connect to the database:', err);
   });
 
-  //import routes
+// parse application/json
+app.use(bodyParser.json())
+
+//import routes
 const routes = require("./routes.js");
 
 //uses the routes file to route the user to the proper page
