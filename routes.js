@@ -29,12 +29,14 @@ router.get('/api/users', asyncHandler(async(req, res) => {
 // Creates a user, sets the Location header to "/", and returns no content
 router.post('/api/users', asyncHandler(async(req, res) => {
     try{
-      res.status(201)
-      await User.create({  firstName: req.body.firstName, lastName: req.body.lastName, emailAddress: req.body.emailAddress, password: req.body.password })
+        res.status(201)
+        await User.create({  firstName: req.body.firstName, lastName: req.body.lastName, emailAddress: req.body.emailAddress, password: req.body.password })
+        res.json( {
+            message: "User has been created"
+        })
     }catch(error) {
-      res.status(400)
-      res.json({ error });
-      
+        res.status(400)
+        res.json({ error });
     }
 }));
 
@@ -70,42 +72,50 @@ router.get('/api/courses/:id', asyncHandler(async(req, res) => {
 
 // Creates a course, sets the Location header to the URI for the course, and returns no content
 router.post('/api/courses', asyncHandler(async(req, res) => {
-  try{
-    res.status(201)
-    await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
+  try {
+        res.status(201)
+        console.log(req.body)
+        await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
+        res.json( {
+            message: "Course has been created"
+        })
   }catch(error) {
-    res.status(400)
-    res.json({ error })
-  }
+        res.status(400)
+        res.json({ error })
+    }
 }));
 
 // Updates a course and returns no content
 router.put('/api/courses/:id', asyncHandler(async(req, res) => {
-  try{
-    res.status(204)
-    await Course.update({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded }, {
-      where: {
-        id: req.params.id
-      }
-    })
+  try {
+        res.status(204)
+        console.log(req.body)
+        await Course.update({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded }, {
+        where: {
+            id: req.params.id
+        }
+        })
+        res.json( {
+            message: "Course has been Updated"
+        })
   }catch(error) {
-    res.status(400)
-    res.json({ error });
+        res.status(400)
+        res.json({ error });
   }
 }));
 
 // deletes a course and returns no content
 router.delete('/api/courses/:id', asyncHandler(async(req, res) => {
   try{
-    await Course.destroy({
-      where: {
-        id: req.params.id
-      }
-    })
-    res.status(204)
+        await Course.destroy({
+        where: {
+            id: req.params.id
+        }
+        })
+        res.status(204)
   } catch(error) {
-    res.status(400)
-    res.json({ error })
+        res.status(400)
+        res.json({ error })
   }
   
 }));
