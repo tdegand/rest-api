@@ -76,19 +76,20 @@ router.get('/api/courses/:id', asyncHandler(async(req, res) => {
 router.post('/api/courses', asyncHandler(async(req, res) => {
   try {
         res.status(201)
-        const newCourse = await Course.create({  title: req.params.title, description: req.params.description, estimatedTime: req.params.estimatedTime, materialsNeeded: req.params.materialsNeeded })
-        res.json({ newCourse })
+        await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
+        res.json({
+          message: "Course has been created!"
+        })
   }catch(error) {
         res.status(400)
         res.json({ error: error.errors })
-        console.log(req.body)
     }
 }));
 
 // Updates a course and returns no content
 router.put('/api/courses/:id', asyncHandler(async(req, res) => {
   try{
-     await Course.update({ title: req.params.title, description: req.params.description, estimatedTime: req.params.estimatedTime, materialsNeeded: req.params.materialsNeeded},
+     await Course.update({ title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded},
         { where: { id: req.params.id } })
     res.json({
       message: "Course has been updated"
