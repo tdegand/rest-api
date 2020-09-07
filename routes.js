@@ -3,6 +3,8 @@ const router = express.Router();
 const { User, Course } = require('./models');
 const { body } = require('express-validator');
 
+router.use(express.json());
+
 function asyncHandler(cb){
     return async(req, res, next) => {
       try {
@@ -74,33 +76,27 @@ router.get('/api/courses/:id', asyncHandler(async(req, res) => {
 router.post('/api/courses', asyncHandler(async(req, res) => {
   try {
         res.status(201)
-        console.log(req.body)
-        await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
-        res.json( {
-            message: "Course has been created"
-        })
+        const newCourse = await Course.create({  title: req.params.title, description: req.params.description, estimatedTime: req.params.estimatedTime, materialsNeeded: req.params.materialsNeeded })
+        res.json({ newCourse })
   }catch(error) {
         res.status(400)
-        res.json({ error })
+        res.json({ error: error.errors })
+        console.log(req.body)
     }
 }));
 
 // Updates a course and returns no content
 router.put('/api/courses/:id', asyncHandler(async(req, res) => {
-  try {
-        res.status(204)
-        console.log(req.body)
-        await Course.update({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded }, {
-        where: {
-            id: req.params.id
-        }
-        })
-        res.json( {
-            message: "Course has been Updated"
-        })
+  try{
+     await Course.update({ title: req.params.title, description: req.params.description, estimatedTime: req.params.estimatedTime, materialsNeeded: req.params.materialsNeeded},
+        { where: { id: req.params.id } })
+    res.json({
+      message: "Course has been updated"
+    })
+    res.status(204)  
   }catch(error) {
-        res.status(400)
-        res.json({ error });
+    res.status(400)
+    res.json({ error })
   }
 }));
 
@@ -113,11 +109,13 @@ router.delete('/api/courses/:id', asyncHandler(async(req, res) => {
         }
         })
         res.status(204)
+        res.json({
+          message: "Course deleted!"
+        })
   } catch(error) {
         res.status(400)
         res.json({ error })
   }
-  
 }));
 
 // setup a friendly greeting for the root route
