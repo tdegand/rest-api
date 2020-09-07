@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { User, Course } = require('./models');
-const { body } = require('express-validator');
+const bcryptjs = require('bcryptjs');
+const auth = require('basic-auth');
+const { check, validationResult } = require('express-validator');
 
 router.use(express.json());
 
+//user authentication middleware will go here
+
+//Async handler for this application
 function asyncHandler(cb){
     return async(req, res, next) => {
       try {
@@ -17,29 +22,42 @@ function asyncHandler(cb){
 
 // Get the currently Authenticated user
 router.get('/api/users', asyncHandler(async(req, res) => {
-  try {
-     await User.findByPk(req.params.id).then(user => {
-      res.status(200)
-      res.json({ user })
-  })
-  } catch(error) {
-      res.status(404)
-      res.json({ error })
-  }
+
 }));
 
 // Creates a user, sets the Location header to "/", and returns no content
-router.post('/api/users', asyncHandler(async(req, res) => {
-    try{
-        res.status(201)
-        await User.create({  firstName: req.body.firstName, lastName: req.body.lastName, emailAddress: req.body.emailAddress, password: req.body.password })
-        res.json( {
-            message: "User has been created"
-        })
-    }catch(error) {
-        res.status(400)
-        res.json({ error });
-    }
+router.post('/api/users', [
+  //checks to make sure required fields are filled in
+  check('firstName')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a first name'),
+  check('lastName')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a last name'),
+  check('emailAddress')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide an email address'),
+  check('password')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a "password"'),
+], asyncHandler(async(req, res) => {
+  const errors = validationResult(req);
+
+  //if there are error then it maps over each one and returns it to the user
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => error.msg);
+    return res.status(400).json({ errors: errorMessages });
+  }
+
+  try{
+      let user = req.body;
+      user.password = bcryptjs.hashSync(user.password);
+      await User.create(user)
+      res.location('/' + inst._id)
+  }catch(error) {
+      res.status(400)
+      res.json({ error });
+  }
 }));
 
 // Returns a list of courses (including the user that owns each course)
@@ -73,24 +91,32 @@ router.get('/api/courses/:id', asyncHandler(async(req, res) => {
 
 
 // Creates a course, sets the Location header to the URI for the course, and returns no content
-router.post('/api/courses', asyncHandler(async(req, res) => {
+router.post('/api/courses', [
+  //checks to make sure required fields are filled in
+  check('title')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a Title'),
+  check('description')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a description'),
+], asyncHandler(async(req, res) => {
   try {
-        res.status(201)
-        await Course.create({  title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded })
-        res.json({
-          message: "Course has been created!"
-        })
+      res.status(201)
+      await Course.create(req.body)
+      res.json({
+         message: "Course has been created!"
+      })
   }catch(error) {
-        res.status(400)
-        res.json({ error: error.errors })
-    }
+      res.status(400)
+      res.json({ error: error.errors })
+  }
 }));
 
 // Updates a course and returns no content
 router.put('/api/courses/:id', asyncHandler(async(req, res) => {
   try{
-     await Course.update({ title: req.body.title, description: req.body.description, estimatedTime: req.body.estimatedTime, materialsNeeded: req.body.materialsNeeded},
-        { where: { id: req.params.id } })
+    const curCourse = await Course.findByPk(req.params.id)
+    curCourse.update(req.body)
     res.json({
       message: "Course has been updated"
     })
@@ -104,18 +130,18 @@ router.put('/api/courses/:id', asyncHandler(async(req, res) => {
 // deletes a course and returns no content
 router.delete('/api/courses/:id', asyncHandler(async(req, res) => {
   try{
-        await Course.destroy({
-        where: {
-            id: req.params.id
-        }
-        })
-        res.status(204)
-        res.json({
-          message: "Course deleted!"
-        })
+      await Course.destroy({
+      where: {
+          id: req.params.id
+      }
+      })
+      res.status(204)
+      res.json({
+        message: "Course deleted!"
+      })
   } catch(error) {
-        res.status(400)
-        res.json({ error })
+      res.status(400)
+      res.json({ error })
   }
 }));
 
