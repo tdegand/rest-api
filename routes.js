@@ -73,6 +73,9 @@ router.post('/api/users', [
   check('emailAddress')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide an email address'),
+  check('emailAddress')
+    .isEmail()
+    .withMessage('Please provide a valid email address'),
   check('password')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a "password"'),
@@ -89,7 +92,9 @@ router.post('/api/users', [
       let user = req.body;
       user.password = bcryptjs.hashSync(user.password);
       await User.create(user)
-      res.location('/')
+      res.location('/').status(200).json({
+        message: "User created successfully"
+      })
   }catch(error) {
       res.status(400)
       res.json({ error });
@@ -113,8 +118,15 @@ router.get('/api/courses', asyncHandler(async(req, res) => {
 router.get('/api/courses/:id', asyncHandler(async(req, res) => {
   try {
      await Course.findByPk(req.params.id).then(course => {
-      res.status(200)
-      res.json({ course })
+       if(course) {
+        res.status(200)
+        res.json({ course })
+       } else {
+         res.status(404).json({
+           message: "course does not exist"
+         })
+       }
+      
   })
   } catch(error) {
       res.status(404)
@@ -152,11 +164,17 @@ router.post('/api/courses', [
 router.put('/api/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
   try{
     const curCourse = await Course.findByPk(req.params.id)
-    curCourse.update(req.body)
-    res.json({
-      message: "Course has been updated"
-    })
-    res.status(204)  
+    if(curCourse){
+      curCourse.update(req.body)
+      res.json({
+        message: "Course has been updated"
+      })
+      res.status(204)  
+    } else {
+      res.status(404).json({
+        message: "Course could not be found"
+      })
+    } 
   }catch(error) {
     res.status(400)
     res.json({ error })
