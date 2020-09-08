@@ -9,10 +9,10 @@ router.use(express.json());
 
 //user authentication middleware will go here
 const authenticateUser = async (req, res, next) => {
+  let message = null;
   // Parse the user's credentials from the Authorization header.
   const credentials = auth(req);
   // If the user's credentials are available...
-  try{
     if(credentials) {
       const users = await User.findAll()
       const user = users.find(user => user.emailAddress === credentials.name)
@@ -37,10 +37,6 @@ const authenticateUser = async (req, res, next) => {
     } else {
       next();
     }
-  } catch(error) {
-    res.status(404).json({ error })
-    next()
-  }  
 }
 
 //Async handler for this application
