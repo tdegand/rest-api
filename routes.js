@@ -12,30 +12,35 @@ const authenticateUser = async (req, res, next) => {
   // Parse the user's credentials from the Authorization header.
   const credentials = auth(req);
   // If the user's credentials are available...
-  if(credentials) {
-    const user = await User.findOne({ where: {emailAddress: req.params.emailAddress}})
-    if(user) {
-      const authenticated = bcryptjs
-        .compareSync(credentials.pass, user.password);
-        if(authenticated) {
-          req.currentUser = user;
-        } else {
-          message = `Authentication failure for username: ${user.emailAddress}`;
-        }
-    }  else {
-      message = `User not found for username: ${credentials.emailAddress}`;
-    } 
-  } else {
-    message = 'Auth header not found';
-  }
-  // If user authentication failed
-  if (message) {
-    console.warn(message);
-    // Return a response with a 401 Unauthorized HTTP status code.
-    res.status(401).json({ message: 'Access Denied' });
-  } else {
-    next();
-  }
+  try{
+    if(credentials) {
+      const users = await User.findAll()
+      const user = users.find(user => user.emailAddress === credentials.name)
+      if(user) {
+        const authenticated = bcryptjs
+          .compareSync(credentials.pass, user.password);
+          if(authenticated) {
+            console.log(`Authentication successful for username: ${user.emailAddress}`);
+            req.currentUser = user;
+          } else {
+            message = `Authentication failure for username: ${user.emailAddress}`;
+          }
+      }  else {
+        message = `User not found for username: ${credentials.name}`;
+      } 
+    } else {
+      message = 'Auth header not found';
+    }
+    if(message) {
+      console.warn(message)
+      res.status(401).json({ message: 'Access Denied' });
+    } else {
+      next();
+    }
+  } catch(error) {
+    res.status(404).json({ error })
+    next()
+  }  
 }
 
 //Async handler for this application
