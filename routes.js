@@ -105,12 +105,16 @@ router.post('/api/users', [
 // Returns a list of courses (including the userId that owns each course)
 router.get('/api/courses', asyncHandler(async(req, res) => {
   try {
-      const user = await User.findOne({ User })
-      await Course.findAll().then(course => {
-      course.userId = user.id
-      res.status(200)
-      res.json({ course })
-     })
+      const courses = await Course.findAll({
+        include: [
+          {
+            model: User,
+            as: 'owner',
+            attributes: ['id','firstName','lastName', 'emailAddress']
+          }
+        ]
+      });
+      res.json(courses)
   } catch(error) {
       res.status(404)
       res.json({ error })
