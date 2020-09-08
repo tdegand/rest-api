@@ -106,6 +106,7 @@ router.post('/api/users', [
 router.get('/api/courses', asyncHandler(async(req, res) => {
   try {
       const courses = await Course.findAll({
+        attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'createdAt', 'updatedAt'],
         include: [
           {
             model: User,
@@ -113,28 +114,39 @@ router.get('/api/courses', asyncHandler(async(req, res) => {
             attributes: ['id','firstName','lastName', 'emailAddress']
           }
         ]
-      });
-      res.json(courses)
-  } catch(error) {
-      res.status(404)
-      res.json({ error })
-  }
+    });
+        res.status(200)
+        res.json({ courses })
+    } catch(error) {
+          res.status(404)
+          res.json({ error })
+    }
 }));
 
 // Returns the course (including the user that owns the course) for the provided course ID
 router.get('/api/courses/:id', asyncHandler(async(req, res) => {
   try {
-     await Course.findByPk(req.params.id).then(course => {
-       if(course) {
-        res.status(200)
-        res.json({ course })
-       } else {
-         res.status(404).json({
-           message: "course does not exist"
-         })
-       }
-      
-  })
+     const course = await Course.findOne({
+      attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'createdAt', 'updatedAt'],
+      where: {
+        id: req.params.id
+      },
+      include: [
+        {
+          model: User,
+          as: 'owner',
+          attributes: ['id','firstName','lastName', 'emailAddress']
+        }
+      ]
+     })
+      if(course){
+          res.status(200)
+          res.json({ course })
+      } else {
+          res.status(404).json({
+            message: "course does not exist"
+          })
+      }  
   } catch(error) {
       res.status(404)
       res.json( {
