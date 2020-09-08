@@ -15,10 +15,12 @@ const authenticateUser = async (req, res, next) => {
   // If the user's credentials are available...
     if(credentials) {
       const users = await User.findAll()
+      //finds the user and matches the credentials
       const user = users.find(user => user.emailAddress === credentials.name)
       if(user) {
         const authenticated = bcryptjs
           .compareSync(credentials.pass, user.password);
+          //if credentials match then set the req object to be the current user
           if(authenticated) {
             console.log(`Authentication successful for username: ${user.emailAddress}`);
             req.currentUser = user;
@@ -31,6 +33,7 @@ const authenticateUser = async (req, res, next) => {
     } else {
       message = 'Auth header not found';
     }
+    //if authentication does not work return an error and access denied message
     if(message) {
       console.warn(message)
       res.status(401).json({ message: 'Access Denied' });
@@ -73,6 +76,7 @@ router.post('/api/users', [
   check('emailAddress')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide an email address'),
+  //validates that it is in fact an email address
   check('emailAddress')
     .isEmail()
     .withMessage('Please provide a valid email address'),
@@ -101,7 +105,7 @@ router.post('/api/users', [
   }
 }));
 
-// Returns a list of courses (including the user that owns each course)
+// Returns a list of courses (including the userId that owns each course)
 router.get('/api/courses', asyncHandler(async(req, res) => {
   try {
      await Course.findAll().then(course => {
