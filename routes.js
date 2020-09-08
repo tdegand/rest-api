@@ -8,6 +8,35 @@ const { check, validationResult } = require('express-validator');
 router.use(express.json());
 
 //user authentication middleware will go here
+const authenticateUser = async (req, res, next) => {
+  // Parse the user's credentials from the Authorization header.
+  const credentials = auth(req);
+  // If the user's credentials are available...
+  if(credentials) {
+    const user = await User.findOne({ where: {emailAddress: req.params.emailAddress}})
+    if(user) {
+      const authenticated = bcryptjs
+        .compareSync(credentials.pass, user.password);
+        if(authenticated) {
+          req.currentUser = user;
+        } else {
+          message = `Authentication failure for username: ${user.emailAddress}`;
+        }
+    }  else {
+      message = `User not found for username: ${credentials.emailAddress}`;
+    } 
+  } else {
+    message = 'Auth header not found';
+  }
+  // If user authentication failed
+  if (message) {
+    console.warn(message);
+    // Return a response with a 401 Unauthorized HTTP status code.
+    res.status(401).json({ message: 'Access Denied' });
+  } else {
+    next();
+  }
+}
 
 //Async handler for this application
 function asyncHandler(cb){
@@ -21,8 +50,14 @@ function asyncHandler(cb){
   }
 
 // Get the currently Authenticated user
-router.get('/api/users', asyncHandler(async(req, res) => {
-
+router.get('/api/users', authenticateUser, asyncHandler(async(req, res) => {
+  const user = req.currentUser;
+  res.json({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    emailAddress: user.emailAddress,
+    password: user.password
+  })
 }));
 
 // Creates a user, sets the Location header to "/", and returns no content
@@ -53,7 +88,7 @@ router.post('/api/users', [
       let user = req.body;
       user.password = bcryptjs.hashSync(user.password);
       await User.create(user)
-      res.location('/' + inst._id)
+      res.location('/')
   }catch(error) {
       res.status(400)
       res.json({ error });
@@ -99,7 +134,7 @@ router.post('/api/courses', [
   check('description')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a description'),
-], asyncHandler(async(req, res) => {
+], authenticateUser, asyncHandler(async(req, res) => {
   try {
       res.status(201)
       await Course.create(req.body)
@@ -113,7 +148,7 @@ router.post('/api/courses', [
 }));
 
 // Updates a course and returns no content
-router.put('/api/courses/:id', asyncHandler(async(req, res) => {
+router.put('/api/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
   try{
     const curCourse = await Course.findByPk(req.params.id)
     curCourse.update(req.body)
@@ -128,7 +163,7 @@ router.put('/api/courses/:id', asyncHandler(async(req, res) => {
 }));
 
 // deletes a course and returns no content
-router.delete('/api/courses/:id', asyncHandler(async(req, res) => {
+router.delete('/api/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
   try{
       await Course.destroy({
       where: {
