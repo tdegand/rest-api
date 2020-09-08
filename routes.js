@@ -60,7 +60,6 @@ router.get('/api/users', authenticateUser, asyncHandler(async(req, res) => {
     firstName: user.firstName,
     lastName: user.lastName,
     emailAddress: user.emailAddress,
-    password: user.password
   })
 }));
 
@@ -96,9 +95,7 @@ router.post('/api/users', [
       let user = req.body;
       user.password = bcryptjs.hashSync(user.password);
       await User.create(user)
-      res.location('/').status(200).json({
-        message: "User created successfully"
-      })
+      res.location('/').status(200)
   }catch(error) {
       res.status(400)
       res.json({ error });
@@ -108,9 +105,11 @@ router.post('/api/users', [
 // Returns a list of courses (including the userId that owns each course)
 router.get('/api/courses', asyncHandler(async(req, res) => {
   try {
-     await Course.findAll().then(course => {
-       res.status(200)
-       res.json({ course })
+      const user = await User.findOne({ User })
+      await Course.findAll().then(course => {
+      course.userId = user.id
+      res.status(200)
+      res.json({ course })
      })
   } catch(error) {
       res.status(404)
@@ -152,12 +151,18 @@ router.post('/api/courses', [
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a description'),
 ], authenticateUser, asyncHandler(async(req, res) => {
+  const errors = validationResult(req);
+
+  //if there are error then it maps over each one and returns it to the user
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => error.msg);
+    return res.status(400).json({ errors: errorMessages });
+  }
+
   try {
       res.status(201)
-      await Course.create(req.body)
-      res.json({
-         message: "Course has been created!"
-      })
+      const course = await Course.create(req.body)
+      res.location("/api/courses" + course.id);
   }catch(error) {
       res.status(400)
       res.json({ error: error.errors })
@@ -165,15 +170,28 @@ router.post('/api/courses', [
 }));
 
 // Updates a course and returns no content
-router.put('/api/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
+router.put('/api/courses/:id',  [
+  //checks to make sure required fields are filled in
+  check('title')
+    .exists()
+    .withMessage('Please provide a Title'),
+  check('description')
+    .exists()
+    .withMessage('Please provide a description'),
+], authenticateUser, asyncHandler(async(req, res) => {
+  const errors = validationResult(req);
+
+  //if there are error then it maps over each one and returns it to the user
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => error.msg);
+    return res.status(400).json({ errors: errorMessages });
+  }
+
   try{
     const curCourse = await Course.findByPk(req.params.id)
     if(curCourse){
+      res.status(204) 
       curCourse.update(req.body)
-      res.json({
-        message: "Course has been updated"
-      })
-      res.status(204)  
     } else {
       res.status(404).json({
         message: "Course could not be found"
