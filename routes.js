@@ -56,6 +56,7 @@ function asyncHandler(cb){
 // Get the currently Authenticated user
 router.get('/api/users', authenticateUser, asyncHandler(async(req, res) => {
   const user = req.currentUser;
+  //return current Authenticated user
   res.json({
     firstName: user.firstName,
     lastName: user.lastName,
@@ -92,10 +93,14 @@ router.post('/api/users', [
   }
 
   try{
+      /*hash the user password
+      * Create the new user
+      * set the header location to be the root route send the status 201 and end the request
+      */
       let user = req.body;
       user.password = bcryptjs.hashSync(user.password);
       await User.create(user)
-      res.location('/').status(200)
+      res.location('/').status(201).end()
   }catch(error) {
       res.status(400)
       res.json({ error });
@@ -105,6 +110,10 @@ router.post('/api/users', [
 // Returns a list of courses (including the userId that owns each course)
 router.get('/api/courses', asyncHandler(async(req, res) => {
   try {
+      /*find all Courses and associated user accounts that created them
+      * set the status to 200 OK
+      * return all of the found courses
+      */
       const courses = await Course.findAll({
         attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'createdAt', 'updatedAt'],
         include: [
@@ -178,7 +187,7 @@ router.post('/api/courses', [
   try {
       res.status(201)
       const course = await Course.create(req.body)
-      res.location("/api/courses" + course.id);
+      res.location("/api/courses" + course.id).end();
   }catch(error) {
       res.status(400)
       res.json({ error: error.errors })
@@ -204,10 +213,14 @@ router.put('/api/courses/:id',  [
   }
 
   try{
+    /**
+     * Finds the Current Course
+     * updates the course returns 204 status and ends the request
+     */
     const curCourse = await Course.findByPk(req.params.id)
     if(curCourse){
-      res.status(204) 
       curCourse.update(req.body)
+      res.status(204).end();
     } else {
       res.status(404).json({
         message: "Course could not be found"
