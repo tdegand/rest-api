@@ -24,7 +24,7 @@ To test the Express server, browse to the URL [http://localhost:5000/](http://lo
 
 1. If you haven’t already, install Postman. Links and instructions are available on their website at https://www.getpostman.com/.
 2. Once you have Postman installed and open, click on the “Import” button in the top left hand corner of the application’s window.
-3. In the opened dialog, click the “Choose Files” button and browse to the folder that contains your project files.
+3. In the opened dialog, click the “Choose Files” button and browse to the folder that contains the project files.
 4. Select the RESTAPI.postman_collection.json file.
 
 Use Postman and import this file `RESTAPI.postman_collection.json` to test this API against various GET, POST, PUT and DELETE requests. 
