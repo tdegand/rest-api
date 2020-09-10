@@ -187,7 +187,7 @@ router.post('/api/courses', [
   try {
       res.status(201)
       const course = await Course.create(req.body)
-      res.location("/api/courses" + course.id).end();
+      res.location("/api/courses/" + course.id).end();
   }catch(error) {
       res.status(400)
       res.json({ error: error.errors })
@@ -205,6 +205,7 @@ router.put('/api/courses/:id',  [
     .withMessage('Please provide a description'),
 ], authenticateUser, asyncHandler(async(req, res) => {
   const errors = validationResult(req);
+  const user = req.currentUser;
 
   //if there are error then it maps over each one and returns it to the user
   if (!errors.isEmpty()) {
@@ -218,14 +219,21 @@ router.put('/api/courses/:id',  [
      * updates the course returns 204 status and ends the request
      */
     const curCourse = await Course.findByPk(req.params.id)
-    if(curCourse){
-      curCourse.update(req.body)
-      res.status(204).end();
+
+    if(curCourse.userId === user.id) {
+      if(curCourse){
+        curCourse.update(req.body)
+        res.status(204).end();
+      } else {
+        res.status(404).json({
+          message: "Course could not be found"
+        })
+      }
     } else {
-      res.status(404).json({
-        message: "Course could not be found"
+      res.status(403).json({
+        message: "Authenitcation Failed. You do not have access to update this course"
       })
-    } 
+    }
   }catch(error) {
     res.status(400)
     res.json({ error })
@@ -234,8 +242,13 @@ router.put('/api/courses/:id',  [
 
 // deletes a course and returns no content
 router.delete('/api/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
+  const user = req.currentUser;
   try{
-      await Course.destroy({
+
+    const curCourse = await Course.findByPk(req.params.id)
+
+    if(curCourse.userId === user.id) {
+      await curCourse.destroy({
       where: {
           id: req.params.id
       }
@@ -244,6 +257,11 @@ router.delete('/api/courses/:id', authenticateUser, asyncHandler(async(req, res)
       res.json({
         message: "Course deleted!"
       })
+    } else {
+      res.status(403).json({
+        message: "Authenitcation Failed. You do not have access to delete this course"
+      })
+    }
   } catch(error) {
       res.status(400)
       res.json({ error })
