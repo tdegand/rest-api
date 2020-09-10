@@ -115,7 +115,7 @@ router.get('/api/courses', asyncHandler(async(req, res) => {
       * return all of the found courses
       */
       const courses = await Course.findAll({
-        attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'createdAt', 'updatedAt'],
+        attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded'],
         include: [
           {
             model: User,
@@ -136,7 +136,7 @@ router.get('/api/courses', asyncHandler(async(req, res) => {
 router.get('/api/courses/:id', asyncHandler(async(req, res) => {
   try {
      const course = await Course.findOne({
-      attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded'],
       where: {
         id: req.params.id
       },
